@@ -1,1 +1,1 @@
-# mha
+# 8Queen problem solver
