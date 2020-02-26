@@ -1,0 +1,419 @@
+#pragma hdrstop
+#pragma argsused
+
+#include <tchar.h>
+#include <stdio.h>
+#include <conio.h>
+#include <iostream.h>
+
+#define STATESIZE  8
+#define MAXSUC  (STATESIZE*STATESIZE-1)/2
+#define QSIZE  10000
+// ---------------------------------------------------------------------------
+// ----------------------------DEFINITION OF STATE-------------------------------
+
+class State {
+public:
+	State();
+	State(int id1, int depth, int pathCost, int parent);
+
+	int id;
+	int size;
+	int priority;
+	int depth;
+	int pathCost;
+	int parent;
+	int items[STATESIZE];
+};
+
+State::State() {
+	id = priority = pathCost = parent = 0;
+
+};
+
+State::State(int id1, int depth1, int pathCost1, int parent1) {
+	id = id1;
+	depth = depth1;
+	pathCost = pathCost1;
+	parent = parent1;
+	// items = items1;
+};
+// ---------------------------------------------------------------------------
+
+class Action {
+public:
+	Action();
+
+	int MAX;
+	int a1;
+	int a2;
+
+};
+
+Action::Action() {
+	MAX = 8;
+}
+
+// ---------------------------------------------------------------------------
+template<class T>
+class PQueue {
+public:
+	PQueue();
+	int is_empty();
+	void enqueue(T &, int &);
+	void enqueuePrio(T &, int &);
+	void retrieve(T &, int &);
+	T dequeue(int &);
+	void print();
+
+private:
+	T items[QSIZE];
+	int front;
+	int rear;
+};
+
+// **************
+template<class T>
+PQueue<T>::PQueue() {
+	front = 0;
+	rear = -1;
+}
+
+// *************
+template<class T>
+int PQueue<T>::is_empty() {
+	if (rear < front)
+		return 1;
+	return 0;
+}
+
+// *************
+template<class T>
+void PQueue<T>::enqueue(T &x, int &overflow) {
+	if (rear == QSIZE - 1)
+		overflow = 1;
+	else {
+		overflow = 0;
+		items[++rear] = x;
+	}
+}
+
+// *************
+template<class T>
+void PQueue<T>::enqueuePrio(T &x, int &overflow) {
+	if (rear == QSIZE - 1)
+		overflow = 1;
+	else {
+		overflow = 0;
+		items[++rear] = x;
+	}
+	// set the priority of the state
+	int k = rear;
+
+	while (items[k].priority < items[k - 1].priority && k > front) {
+		// swap states
+		T temp = items[k];
+		items[k] = items[k - 1];
+		items[k - 1] = temp;
+		k--;
+	}
+
+}
+
+// *************
+template<class T>
+void PQueue<T>::retrieve(T &x, int &underflow) {
+	if (is_empty())
+		underflow = 1;
+	else {
+		underflow = 0;
+		x = items[front];
+	}
+}
+
+// *************
+template<class T>
+T PQueue<T>::dequeue(int &underflow) {
+	if (is_empty())
+		underflow = 1;
+	else {
+		underflow = 0;
+		return items[front++];
+	}
+}
+// *************
+
+// *************
+template<class T>
+void PQueue<T>::print() {
+	if (is_empty())
+		cout << "Queue is empty.";
+	for (int i = front; i <= rear; i++)
+		cout << "(" << items[i].id << "," << items[i].priority << ")  ";
+	cout << "\nPress a key to continue.";
+	// getch();
+}
+
+// ===============================================
+void test1() {
+	PQueue<State>Q1;
+	int o;
+	State x1, x2, x3, x4, x5, x6;
+	x1.id = 1;
+	x1.priority = 3;
+	x2.id = 2;
+	x2.priority = 20;
+	x3.id = 3;
+	x3.priority = 2;
+	x4.id = 4;
+	x4.priority = 4;
+	x5.id = 5;
+	x5.priority = 1;
+	x6.id = 6;
+	x6.priority = 1;
+
+	Q1.enqueuePrio(x1, o);
+	Q1.enqueuePrio(x2, o);
+	Q1.enqueuePrio(x3, o);
+	Q1.enqueuePrio(x4, o);
+	Q1.enqueuePrio(x5, o);
+	Q1.enqueuePrio(x6, o);
+	Q1.print();
+
+}
+
+// ==============================================
+class ProblemSolver {
+
+	State initial;
+	Action action;
+	PQueue<State>fringe;
+
+	State * BFSearch(State *, int num);
+	State * DFSearch(State *, int num);
+	State * IDSearch(State *, int num);
+	State * UCSearch(State *, int num);
+	State * GreedySearch(State *, int num);
+	State * AstarSearch(State *, int num);
+	State * RBFSearch(State *, int num);
+
+public:
+	ProblemSolver(State initial);
+	State TransitionFunction(State si, Action aj);
+	double CostFunction(State si, Action aj);
+	State * Expand(State Si, int &);
+	bool GoalTestFunction(State si);
+	void GenerateSolution(State si);
+	int DoAction(State Si, int index);
+	void Search(char strategy);
+
+};
+
+// ============================================
+ProblemSolver::ProblemSolver(State s0) {
+	int o;
+	initial = s0;
+	initial.id = 0;
+	initial.size = 8;
+	initial.priority = 1;
+	initial.depth = 0;
+	initial.pathCost = 0;
+	initial.parent = 0;
+	fringe.enqueuePrio(initial, o);
+}
+
+// ============================================
+State * ProblemSolver::BFSearch(State * suc, int num) {
+	for (int i = 0; i < num; i++)
+		suc[i].priority = suc[i].depth;
+	return suc;
+}
+
+// ============================================
+State * ProblemSolver::DFSearch(State * suc, int num) {
+	const INF = 0;
+	for (int i = 0; i < num; i++)
+		suc[i].priority = INF - suc[i].depth;
+	return suc;
+}
+
+// ============================================
+State * ProblemSolver::IDSearch(State * suc, int num) {
+
+}
+
+// ============================================
+State * ProblemSolver::UCSearch(State * suc, int num) {
+	const INF = 0;
+	for (int i = 0; i < num; i++)
+		suc[i].priority = suc[i].pathCost;
+	return suc;
+}
+
+// ============================================
+State * ProblemSolver::GreedySearch(State * suc, int num) {
+
+}
+
+// ============================================
+State * ProblemSolver::AstarSearch(State * suc, int num) {
+
+}
+
+// ============================================
+State * ProblemSolver::RBFSearch(State * suc, int num) {
+
+}
+
+// ============================================
+void ProblemSolver::GenerateSolution(State si) {
+	State sj;
+
+	cout << "problem solved ! [ ";
+	for (int i = 0; i < sj.size; i++) {
+		cout << sj.items[i] << ",";
+
+	}
+	cout << " ]\n";
+	/* while (1) {
+	 cout << si.id;
+	 sj = si.;
+
+	 } */
+
+}
+
+// ============================================
+void ProblemSolver::Search(char strategy) {
+	int o, sucNum;
+	bool stop = false;
+	int count = 0;
+	const int MAX_COUNT =10000;
+	do {
+		cout << "Searching . . .\n";
+		if (fringe.is_empty() || count>MAX_COUNT) {
+			cout << "failed to solve problem\n";
+			return; // failure
+		}
+		State si = fringe.dequeue(o);
+		if (GoalTestFunction(si)) {
+			GenerateSolution(si);
+			stop = true;
+			break;
+		}
+		State * successors = Expand(si, sucNum);
+
+		switch (strategy) {
+		case 'B':
+			successors = BFSearch(successors, sucNum);
+			break;
+		case 'D':
+			successors = DFSearch(successors, sucNum);
+			break;
+		case 'I':
+			successors = IDSearch(successors, sucNum);
+			break;
+		case 'U':
+			successors = UCSearch(successors, sucNum);
+			break;
+		case 'G':
+			successors = GreedySearch(successors, sucNum);
+			break;
+		case 'A':
+			successors = AstarSearch(successors, sucNum);
+			break;
+		case 'R':
+			successors = RBFSearch(successors, sucNum);
+			break;
+		default: ;
+		}
+		for (int i = 0; i < sucNum; i++)
+			fringe.enqueuePrio(successors[i], o);
+       count++;
+	}
+	while (!stop);
+}
+
+// ============================================
+// ============================================
+// ============================================
+// ============================================
+// =================8 queen====================
+// ============================================
+// ============================================
+// ============================================
+// ============================================
+State * ProblemSolver::Expand(State Si, int &num) {
+	State successors[MAXSUC];
+	State Sj;
+	int stateCount = 0;
+	for (int i = 0; i < action.MAX - 1; i++) {
+		for (int j = i + 1; j < action.MAX; j++) {
+			action.a1 = i;
+			action.a2 = j;
+			Sj = TransitionFunction(Si, action);
+			successors[stateCount] = Sj;
+			stateCount++;
+		}
+	}
+	num = stateCount;
+	return successors;
+}
+
+// ============================================
+int ProblemSolver::DoAction(State Si, int index) {
+	return index;
+}
+
+// ============================================
+State ProblemSolver::TransitionFunction(State si, Action aj) {
+	State sj;
+	sj = si;
+	sj.id = si.id + 1;
+	sj.depth = si.depth + 1;
+	sj.pathCost = si.pathCost + CostFunction(si, aj);
+	sj.parent = si.id;
+	int temp = si.items[aj.a1];
+	sj.items[aj.a1] = si.items[aj.a2];
+	sj.items[aj.a2] = temp;
+	return sj;
+}
+
+// ============================================
+double ProblemSolver::CostFunction(State si, Action aj) {
+	return 1;
+}
+
+// ============================================
+bool ProblemSolver::GoalTestFunction(State si) {
+
+	for (int i = 0; i < STATESIZE - 1; i++) {
+		for (int j = i + 1; j < STATESIZE; j++) {
+			if (abs(si.items[i] - si.items[j]) == abs(i - j)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+// ============================================
+
+// ============================================
+int _tmain(int argc, _TCHAR* argv[]) {
+	// test1();
+	State state0(0, 0, 0, 0);
+	int initial[] = {1, 8, 3, 7, 5, 2, 4, 6};
+	state0.items[0] = 1;
+	state0.items[1] = 8;
+	state0.items[2] = 3;
+	state0.items[3] = 7;
+	state0.items[4] = 5;
+	state0.items[5] = 2;
+	state0.items[6] = 4;
+	state0.items[7] = 6;
+	ProblemSolver solver(state0);
+	solver.Search('B');
+
+	getch();
+	return 0;
+}
